@@ -6,7 +6,6 @@
         <router-link v-if="!authState.isAuthenticated" to="/cadastro" class="nav-item">Cadastro</router-link>
 
         <router-link v-if="authState.isAuthenticated" to="/perfil" class="nav-item">Perfil</router-link>
-        <router-link v-if="authState.isAuthenticated" to="/diarios" class="nav-item">Meus Diários</router-link>
         <button v-if="authState.isAuthenticated" @click="handleLogout" class="nav-item logout">Sair</button>
       </nav>
     </header>

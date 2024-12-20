@@ -5,35 +5,27 @@
     <button @click="criarDiario" class="btn btn-primary mb-3">Criar Novo Diário</button>
 
     <div class="card-deck">
-      <div v-for="diario in diarios" :key="diario.id" class="card">
+      <div v-for="diario in diarios" :key="diario.id" class="card" @click="abrirModal(diario)">
         <div class="card-body">
           <h5 class="card-title">{{ diario.titulo }}</h5>
-          <p class="card-text">{{ diario.descricao }}</p>
-          <button @click="editarDiario(diario)" class="btn btn-warning">Editar</button>
-          <button @click="deletarDiario(diario.id)" class="btn btn-danger">Deletar</button>
+          <p class="card-text text-truncate">{{ diario.descricao }}</p>
+          <button @click.stop="abrirModal(diario)" class="btn btn-info">Folhear</button>
         </div>
       </div>
     </div>
 
-    <!-- Modal para editar diário -->
-    <div v-if="mostrarModal" class="modal">
+    <div v-if="loading" class="spinner">Carregando...</div>
+
+    <!-- Modal -->
+    <div v-if="mostrarModal" class="modal-overlay">
       <div class="modal-content">
-        <h2>Editar Diário</h2>
-
-        <form @submit.prevent="salvarEdicao">
-          <div class="form-group">
-            <label for="titulo">Título</label>
-            <input type="text" id="titulo" v-model="diarioSelecionado.titulo" class="form-control" required>
-          </div>
-
-          <div class="form-group">
-            <label for="descricao">Descrição</label>
-            <textarea id="descricao" v-model="diarioSelecionado.descricao" class="form-control" required></textarea>
-          </div>
-
-          <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-          <button @click="fecharModal" class="btn btn-secondary">Cancelar</button>
-        </form>
+        <button class="close-button" @click="fecharModal">×</button>
+        <h2>{{ diarioSelecionado.titulo }}</h2>
+        <p>{{ diarioSelecionado.descricao }}</p>
+        <div class="modal-actions">
+          <button @click="editarDiario(diarioSelecionado)" class="btn btn-warning">Editar</button>
+          <button @click="deletarDiario(diarioSelecionado.id)" class="btn btn-danger">Deletar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -50,6 +42,7 @@ export default {
       diarios: [],
       mostrarModal: false,
       diarioSelecionado: null,
+      loading: false,
       auth: useAuth(),
     };
   },
@@ -74,6 +67,7 @@ export default {
       this.router.push("/login"); // Redireciona para login se o usuário não estiver autenticado
     },
     async buscarDiarios() {
+      this.loading = true;
       try {
         const token = localStorage.getItem('token');
         const response = await axios.get('http://localhost:3000/listarDiarios', {
@@ -85,52 +79,35 @@ export default {
         this.diarios = response.data.diarios;
       } catch (error) {
         console.error('Erro ao buscar diários:', error.response ? error.response.data : error.message);
+      } finally {
+        this.loading = false;
       }
     },
     criarDiario() {
       this.router.push('/criarDiario');
     },
-    editarDiario(diario) {
+    abrirModal(diario) {
       this.diarioSelecionado = { ...diario };
       this.mostrarModal = true;
-    },
-    async salvarEdicao() {
-      try {
-        const token = localStorage.getItem('token');
-        await axios.put(`http://localhost:3000/editar/${this.diarioSelecionado.id}`, {
-          titulo: this.diarioSelecionado.titulo,
-          descricao: this.diarioSelecionado.descricao
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        alert('Diário atualizado com sucesso!');
-
-        this.buscarDiarios();
-
-        this.mostrarModal = false;
-
-      } catch (error) {
-        console.error('Erro ao editar diário:', error.response ? error.response.data : error.message);
-      }
     },
     fecharModal() {
       this.mostrarModal = false;
     },
+    editarDiario(diario) {
+      this.router.push(`/editarDiario/${diario.id}`);
+    },
     async deletarDiario(id) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:3000/lista/diario/excluir/${id}`, {
+        await axios.delete(`http://localhost:3000/diarios/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
 
         alert('Diário deletado com sucesso!');
-
         this.buscarDiarios();
-
+        this.fecharModal();
       } catch (error) {
         console.error('Erro ao deletar diário:', error.response ? error.response.data : error.message);
       }
@@ -140,5 +117,61 @@ export default {
 </script>
 
 <style scoped>
-/* Adicione seu estilo aqui */
+.perfil {
+  padding: 20px;
+}
+
+.card-deck {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.card {
+  width: 200px;
+  cursor: pointer;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+  text-align: center;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
 </style>
