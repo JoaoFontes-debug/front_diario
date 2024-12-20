@@ -2,38 +2,45 @@
   <div id="app">
     <header>
       <nav class="navbar">
-        <router-link to="/" class="nav-item">Login</router-link>
-        <router-link to="/cadastro" class="nav-item">Cadastro</router-link>
-        <router-link v-if="isAuthenticated" to="/perfil" class="nav-item">Perfil</router-link>
-        <router-link v-if="isAuthenticated" to="/diarios" class="nav-item">Meus Diários</router-link>
-        <button v-if="isAuthenticated" @click="logout" class="nav-item logout">Sair</button>
+        <router-link v-if="!authState.isAuthenticated" to="/login" class="nav-item">Login</router-link>
+        <router-link v-if="!authState.isAuthenticated" to="/cadastro" class="nav-item">Cadastro</router-link>
+
+        <router-link v-if="authState.isAuthenticated" to="/perfil" class="nav-item">Perfil</router-link>
+        <router-link v-if="authState.isAuthenticated" to="/diarios" class="nav-item">Meus Diários</router-link>
+        <button v-if="authState.isAuthenticated" @click="handleLogout" class="nav-item logout">Sair</button>
       </nav>
     </header>
     <main>
       <router-view />
     </main>
     <footer>
-      <p>&copy; 2024 Minha Aplicação</p>
+      
     </footer>
   </div>
 </template>
 
 <script>
+  import { computed } from 'vue';
+  import { useAuth } from './auth/GerenciaSessao';
+  import { useRouter } from 'vue-router';
 
 export default {
-  computed: {
-    isAuthenticated() {
-      // Verifica se o token JWT está presente no localStorage
-      return !!localStorage.getItem("token");
-    },
-  },
-  methods: {
-    logout() {
-      // Remove o token do localStorage e redireciona para o login
-      localStorage.removeItem("token");
-      this.$router.push("/");
-    },
-  },
+  setup(){
+    const { authState, logout } = useAuth();
+    const router = useRouter();
+
+    const isAuthenticated = computed(() =>{
+      return authState.isAuthenticated;
+    });
+
+    const handleLogout = () => {
+      logout(); // Executa o logout
+      router.push("/login"); // Redireciona para a página de login
+    };
+
+    return { authState, logout, isAuthenticated, handleLogout };
+  } 
+  
 };
 </script>
 

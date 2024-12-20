@@ -1,71 +1,55 @@
 <template>
-    <div class="login-container">
-      <h1>Login</h1>
-      <form @submit.prevent="login">
-        <div>
-          <label for="email">Email:</label>
-          <input type="email" id="email" v-model="email" required />
-        </div>
-        <div>
-          <label for="senha">Senha:</label>
-          <input type="password" id="senha" v-model="senha" required />
-        </div>
-        <button type="submit">Entrar</button>
-        <p v-if="error" class="error">{{ error }}</p>
-      </form>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    name:'login',
-    data() {
-      return {
-        email: "",
-        senha: "",
-        error: null,
-      };
-    },
-    methods: {
-      async login() {
-        try {
-          const response = await fetch("http://localhost:3000/login", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: this.email,
-              senha: this.senha,
-            }),
-          });
-  
-          if (!response.ok) {
-            const { error } = await response.json();
-            throw new Error(error || "Erro ao fazer login.");
-          }
-  
-          const { token } = await response.json();
-          this.$emit("login-success", token);
+  <div>
+    <h1>Login</h1>
 
-          this.$router.push("/perfil"); // Redireciona para o perfil
-        } catch (err) {
-          this.error = err.message;
-        }
-      },
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .login-container {
-    max-width: 400px;
-    margin: auto;
-    text-align: center;
+    <form @submit.prevent="login">
+      <input v-model="email" placeholder="Email" required />
+      <input v-model="senha" type="password" placeholder="Senha" required />
+
+      <button type="submit">Login</button>
+
+    </form>
+    <p>{{ mensagem }}</p>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+import { useAuth } from '../auth/GerenciaSessao';
+import router from '../router/index';
+
+export default {
+  data() {
+    return {
+      email: '',
+      senha: '',
+      mensagem: ''
+    };
+  },
+  methods: {
+    async login() {
+      const {login} = useAuth();
+
+      try {
+        const response = await axios.post('/login', {
+          email: this.email,
+          senha: this.senha
+        });
+
+        const { token } = response.data;
+        // Armazena o token para futuras requisições
+        localStorage.setItem('token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        router.push("/perfil");
+        login(response.data.token); //atualiza o estado   
+        this.mensagem = 'Login realizado com sucesso!';
+
+      } catch (error) {
+        console.error('Erro no login:', error);
+        this.mensagem = 'Erro no login';
+      }
+    }
   }
-  
-  .error {
-    color: red;
-  }
-  </style>
-  
+};
+</script>

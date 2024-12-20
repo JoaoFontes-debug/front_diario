@@ -1,82 +1,64 @@
 <template>
-    <div class="register-container">
-      <h1>Cadastro</h1>
-      <form @submit.prevent="register">
-        <div>
-          <label for="nome">Nome:</label>
-          <input type="text" id="nome" v-model="nome" required />
-        </div>
-        <div>
-          <label for="email">Email:</label>
-          <input type="email" id="email" v-model="email" required />
-        </div>
-        <div>
-          <label for="senha">Senha:</label>
-          <input type="password" id="senha" v-model="senha" required />
-        </div>
-        <button type="submit">Registrar</button>
-        <p v-if="message" class="success">{{ message }}</p>
-        <p v-if="error" class="error">{{ error }}</p>
-      </form>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    name:'Cadastro',
-    data() {
-      return {
-        nome: "",
-        email: "",
-        senha: "",
-        message: null,
-        error: null,
-      };
-    },
-    methods: {
-      async register() {
-        try {
-          const response = await fetch("http://localhost:3000/registro", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              nome: this.nome,
-              email: this.email,
-              senha: this.senha,
-            }),
-          });
-  
-          if (!response.ok) {
-            const { error } = await response.json();
-            throw new Error(error || "Erro ao registrar.");
-          }
-  
-          const { message } = await response.json();
-          this.message = message;
-          this.$router.push("/");
-        } catch (err) {
-          this.error = err.message;
-        }
-      },
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .register-container {
-    max-width: 400px;
-    margin: auto;
-    text-align: center;
+  <div>
+    <h1>Registrar Pessoa</h1>
+    <form @submit.prevent="registrarPessoa">
+      <input v-model="nome" placeholder="Nome" required />
+      <input v-model="email" placeholder="Email" required />
+      <input v-model="senha" type="password" placeholder="Senha" required />
+      <button type="submit">Registrar</button>
+    </form>
+    <p>{{ mensagem }}</p>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+import { useAuth } from '../auth/GerenciaSessao';
+import router from '../router';
+
+export default {
+  data() {
+    return {
+      nome: '',
+      email: '',
+      senha: '',
+      mensagem: ''
+    };
+  },
+  methods: {
+    async registrarPessoa() {
+      try {
+        // Registrar a pessoa
+        const response = await axios.post('/cadastro', {
+          nome: this.nome,
+          email: this.email,
+          senha: this.senha
+        });
+
+        // Mensagem de sucesso
+        this.mensagem = response.data.message;
+
+        // Fazer login automaticamente após o registro
+        const loginResponse = await axios.post('/login', {
+          email: this.email,
+          senha: this.senha
+        });
+
+        const { token } = loginResponse.data;
+        localStorage.setItem('token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        // Atualizar o estado de autenticação
+        const { login } = useAuth();
+        login(token);
+
+        // Redirecionar para a página de perfil
+        router.push('/perfil');
+      } catch (error) {
+        console.error('Erro ao registrar pessoa:', error);
+        this.mensagem = 'Erro ao registrar pessoa';
+      }
+    }
   }
-  
-  .success {
-    color: green;
-  }
-  
-  .error {
-    color: red;
-  }
-  </style>
-  
+};
+</script>
