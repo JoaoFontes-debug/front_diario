@@ -5,10 +5,13 @@
     <button @click="criarDiario" class="btn btn-primary mb-3">Criar Novo Diário</button>
 
     <div class="card-deck">
-      <div v-for="diario in diarios" :key="diario.id" class="card" @click="abrirModal(diario)">
+      <div v-for="diario in diarios" :key="diario.Pk_diario" class="card" @click="abrirModal(diario)">
+
         <div class="card-body">
+
           <h5 class="card-title">{{ diario.titulo }}</h5>
           <p class="card-text text-truncate">{{ diario.descricao }}</p>
+          <p class="card-text">{{ diario.Pk_diario }}</p>
           <button @click.stop="abrirModal(diario)" class="btn btn-info">Folhear</button>
         </div>
       </div>
@@ -19,13 +22,17 @@
     <!-- Modal -->
     <div v-if="mostrarModal" class="modal-overlay">
       <div class="modal-content">
+
         <button class="close-button" @click="fecharModal">×</button>
+
         <h2>{{ diarioSelecionado.titulo }}</h2>
         <p>{{ diarioSelecionado.descricao }}</p>
+
         <div class="modal-actions">
           <button @click="editarDiario(diarioSelecionado)" class="btn btn-warning">Editar</button>
-          <button @click="deletarDiario(diarioSelecionado.id)" class="btn btn-danger">Deletar</button>
+          <button @click="deletarDiario(diarioSelecionado)" class="btn btn-danger">Deletar</button>
         </div>
+
       </div>
     </div>
   </div>
@@ -66,6 +73,7 @@ export default {
     goToLogin() {
       this.router.push("/login"); // Redireciona para login se o usuário não estiver autenticado
     },
+
     async buscarDiarios() {
       this.loading = true;
       try {
@@ -77,29 +85,40 @@ export default {
         });
 
         this.diarios = response.data.diarios;
+
+    
       } catch (error) {
         console.error('Erro ao buscar diários:', error.response ? error.response.data : error.message);
       } finally {
         this.loading = false;
       }
     },
+
     criarDiario() {
       this.router.push('/criarDiario');
     },
+
     abrirModal(diario) {
+      console.log("diario no modal ", diario);
       this.diarioSelecionado = { ...diario };
       this.mostrarModal = true;
     },
+
     fecharModal() {
       this.mostrarModal = false;
     },
+
     editarDiario(diario) {
-      this.router.push(`/editarDiario/${diario.id}`);
+      this.router.push(`/editarDiario/${diario.Pk_diario}`);
+      console.log("diario na funçao editar do perfil ", diario);
+     
+      
     },
-    async deletarDiario(id) {
+
+    async deletarDiario(diario) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:3000/diarios/${id}`, {
+        await axios.delete(`http://localhost:3000/deletarDiario/${diario.Pk_diario}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -125,6 +144,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+
 }
 
 .card {
@@ -136,6 +156,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: scroll;
 }
 
 .modal-overlay {

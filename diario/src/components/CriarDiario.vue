@@ -24,7 +24,8 @@
   
   <script>
   import axios from 'axios';
-  
+  import { useRouter } from 'vue-router';
+
   export default {
     data() {
       return {
@@ -33,14 +34,23 @@
         mensagem: ''
       };
     },
+    setup() {
+      const router = useRouter();
+
+      return { router };
+    },
     methods: {
       async criarDiario() {
         try {
           const response = await axios.post('/criarDiario', {
             titulo: this.titulo,
             descricao: this.descricao
+            
           });
-          this.mensagem = response.data.message;
+          console.log('Diário criado:', response.data);
+          this.mensagem = response.data.message;          
+          this.router.push('/perfil');
+          
         } catch (error) {
           console.error('Erro ao criar diário:', error);
           this.mensagem = 'Erro ao criar diário';

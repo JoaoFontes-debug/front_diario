@@ -12,7 +12,7 @@ const routes = [
   { path: '/Cadastro', component: cadastro },
   { path: '/Perfil', component: perfil },
   { path: '/CriarDiario', component: criarDiario },
-  { path: '/EditarDiario/:id', component: editarDiario },
+  { path: '/EditarDiario/:Pk_diario', component:editarDiario },
 ];
 
 const router = createRouter({
@@ -21,7 +21,7 @@ const router = createRouter({
 });
 
 // Middleware para verificar autenticação
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _, next) => {
   const isAuthenticated = !!localStorage.getItem('token'); // Verifica se o token está no localStorage
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
